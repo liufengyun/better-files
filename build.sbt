@@ -41,6 +41,7 @@ lazy val core = (project in file("core"))
     name := repo,
     description := "Simple, safe and intuitive I/O in Scala"
   )
+  .settings(dottySettings)
 
 lazy val akka = (project in file("akka"))
   .settings(commonSettings: _*)
@@ -50,6 +51,7 @@ lazy val akka = (project in file("akka"))
     description := "Reactive file watcher using Akka actors",
     libraryDependencies += Dependencies.akka
   )
+  .settings(dottySettings)
   .dependsOn(core % "test->test;compile->compile")
 
 lazy val shapelessScanner = (project in file("shapeless"))
@@ -60,6 +62,7 @@ lazy val shapelessScanner = (project in file("shapeless"))
     description := "Shapeless Scanner",
     libraryDependencies += Dependencies.shapeless
   )
+  .settings(dottySettings)
   .dependsOn(core % "test->test;compile->compile")
 
 lazy val benchmarks = (project in file("benchmarks"))
@@ -138,3 +141,17 @@ lazy val publishSettings = Seq(
     password <- sys.env.get("SONATYPE_PASSWORD")
   } yield Credentials("Sonatype Nexus Repository Manager", "oss.sonatype.org", username, password)).toSeq
 )
+
+lazy val dottyVersion = dottyLatestNightlyBuild.get
+
+lazy val dottySettings = List(
+  scalaVersion := dottyVersion,
+  libraryDependencies := libraryDependencies.value.map(_.withDottyCompat(scalaVersion.value)),
+  scalacOptions := List("-language:Scala2")
+ )
+
+TaskKey[Unit]("dottyCompile") := {
+  compile.in(core, Compile).value
+  compile.in(akka, Compile).value
+  compile.in(shapelessScanner, Compile).value
+}
